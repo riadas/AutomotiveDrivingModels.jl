@@ -140,6 +140,12 @@ end
 struct CustomVehicleState
   veh::VehicleState
   time::Int64
+  ped_init_pos::VecSE2{Float64}
+  ped_vel::Float64
+  obstruction_pos::VecE2{Float64}
+  obstruction_dims::VecE2{Float64}
+  accel::Float64
+  decel::Float64
 end
 
 # define the functions from the interface 

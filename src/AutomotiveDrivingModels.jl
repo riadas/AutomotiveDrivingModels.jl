@@ -1,7 +1,5 @@
 module AutomotiveDrivingModels 
 
-@warn("This package is deprecated: use AutomotiveSimulator.jl instead.")
-
 using Printf
 using LinearAlgebra
 using Parameters
@@ -115,6 +113,7 @@ export
     velf,
     velg,
     VehicleState,
+    CustomVehicleState,
     get_center,
     get_footpoint,
     get_front,

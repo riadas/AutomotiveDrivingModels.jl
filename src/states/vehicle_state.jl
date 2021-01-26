@@ -134,3 +134,64 @@ function Base.convert(::Type{Entity{S, VehicleDef, I}}, veh::Entity{S, D, I}) wh
     vehdef = VehicleDef(class(veh.def), length(veh.def), width(veh.def))
     return Entity{S, VehicleDef, I}(veh.state, vehdef, veh.id)
 end
+
+# ----- START CUSTOM CODE ----- 
+
+struct CustomVehicleState
+  veh::VehicleState
+  time::Int64
+end
+
+# define the functions from the interface 
+function Vec.lerp(a::CustomVehicleState, b::CustomVehicleState, t::Float64, roadway::Roadway)
+  posG = lerp(a.veh.posG, b.veh.posG, t)
+  v = lerp(a.veh.v, b.veh.v, t)
+  CustomVehicleState(posG, roadway, v)
+end
+
+function move_along(vehstate::CustomVehicleState, roadway::Roadway, Δs::Float64;
+  ϕ₂::Float64=posf(vehstate).ϕ, t₂::Float64=posf(vehstate).t, v₂::Float64=vel(vehstate)
+  )
+
+  roadind = move_along(posf(vehstate).roadind, roadway, Δs)
+  try
+      footpoint = roadway[roadind]
+  catch
+      println(roadind)
+  end
+  footpoint = roadway[roadind]
+  posG = convert(VecE2, footpoint.pos) + polar(t₂, footpoint.pos.θ + π/2)
+  posG = VecSE2(posG.x, posG.y, footpoint.pos.θ + ϕ₂)
+  CustomVehicleState(posG, roadway, v₂)
+end
+
+posg(s::CustomVehicleState) = posg(s.veh)
+posf(s::CustomVehicleState) = posf(s.veh)
+velg(s::CustomVehicleState) = velg(s.veh)
+velf(s::CustomVehicleState) = velf(s.veh)
+vel(s::CustomVehicleState) = vel(s.veh)
+
+function Base.getproperty(x::CustomVehicleState, s::Symbol)
+  if s == :posG
+    posg(x)
+  elseif s == :posF
+    posf(x)
+  elseif s == :v
+    vel(x)
+  else
+    getfield(x, s)
+  end
+end
+
+get_center(veh::Entity{CustomVehicleState, D, I}) where {D, I} = veh.state.veh.posG
+get_footpoint(veh::Entity{CustomVehicleState, D, I}) where {D, I} = veh.state.veh.posG + polar(veh.state.veh.posF.t, veh.state.veh.posG.θ-veh.state.veh.posF.ϕ-π/2)
+get_front(veh::Entity{CustomVehicleState, D, I}) where {D<:AbstractAgentDefinition, I} = veh.state.veh.posG + polar(length(veh.def)/2, veh.state.veh.posG.θ)
+get_rear(veh::Entity{CustomVehicleState, D, I}) where {D<:AbstractAgentDefinition, I} = veh.state.veh.posG - polar(length(veh.def)/2, veh.state.veh.posG.θ)
+
+
+function get_lane(roadway::Roadway, vehicle::CustomVehicleState)
+    lane_tag = vehicle.veh.posF.roadind.tag
+    return roadway[lane_tag]
+end
+
+  # ----- END CUSTOM CODE -----

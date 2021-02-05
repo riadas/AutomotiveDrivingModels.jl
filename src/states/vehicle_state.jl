@@ -146,6 +146,7 @@ struct CustomVehicleState
   obstruction_dims::VecE2{Float64}
   accel::Float64
   decel::Float64
+  car_init_vel::Float64
 end
 
 # define the functions from the interface 
